@@ -1,0 +1,217 @@
+const DEVMODE = {
+    on: true, //Switch to TRUE to enter developer mode
+    info: false,
+}
+const CURRENTLOCATION = "machar"; // Add current location
+const NEWTABMESSAGE = 'נפתח בחלון חדש';
+const NEWWINMSG = 'נפתח בחלון חדש';
+const EXTSITEMSG = 'מעבר לאתר חיצוני';
+const PDFTEXT = ' מסמך PDF להורדה או צפייה ';
+const PDFDWNLDTEXT = ' מסמך PDF להורדה ';
+const WORDTEXT = 'מסמך word להורדה';
+const XLSTEXT = 'מסמך excel להורדה';
+
+// Add proper messages to links on the page
+function linkNormalize(links) {
+    try {
+        links.each(function () {
+            if ($(this).attr('tabindex') === '-1' || $(this).attr('data-skip-normalize') === 'true') { // quick return
+                return;
+            }
+            emailLinkFix($(this)); // add "send email" text to label if needed
+            prependDocText($(this), true); // prepend 'word' or 'pdf' to label if needed
+            appendExternalLinkText($(this)); // apend external link to label if needed
+            appendOpensInText($(this)); // apend 'opens in' to label if needed
+
+        })
+
+        // Append "opens in" text to aria-label for linkNormalize()
+        function appendOpensInText(links = $([])) {
+            try {
+                links.each(function () {
+                    let href = $(this).attr('href');
+                    let title = $(this).attr('title');
+                    let download = $(this).attr('download');
+                    let target = $(this).attr('target');
+                    let lbl = $(this).attr('aria-label') && $.trim($(this).attr('aria-label').replace(/[\t,]/g, '').replace(/[\n,]/g, ''));
+                    let lblby = $(this).attr('aria-labelledby');
+                    let txt = $.trim($(this).text().replace(/[\t,]/g, '').replace(/[\n,]/g, ''));
+                    let alt = $(this).find('img').attr('alt');
+                    let type = $(this).attr('role') === "button" ? 'button' : 'link'; //
+                    if (lbl && (lbl.indexOf(CURRENTTABMSG) > -1 || lbl.indexOf(NEWWINMSG) > -1)) {
+                        return; //if exist return
+                    } else if (typeof href == typeof undefined) {
+                        return; // if no href return
+                    }
+                    let msg = '';
+                    if (target === '_blank') {
+                        msg = NEWTABMESSAGE;
+                    } else if (target === '_new') {
+                        msg = NEWWINMSG;
+                    } else if (target === '') {
+                        //msg = CURRENTTABMSG;
+                    } else if (href.indexOf('.pdf') > -1 && typeof download == typeof undefined) {
+                        //msg = CURRENTTABMSG;
+                    } else if ((href.indexOf('www') > -1 || href.indexOf('http') > -1) && typeof target ==
+                        typeof undefined) {
+                        //msg = CURRENTTABMSG;
+                    }
+                    if (typeof lblby !== typeof undefined && lblby !== 'undefined') {
+                        let newid = Math.random().toString(16).slice(2);;
+                        $(this).attr('aria-labelledby', lblby + ' ' + newid);
+                        $(this).append(`<span class="visuallyhidden linkOpenMsg" id="${newid}"> ${msg} </span>`)
+                    } else if (typeof lbl !== typeof undefined && lbl !== 'undefined') {
+                        if (msg === '') {
+                            DEVMODE.on && DEVMODE.info && console.log(`%c ${type}`, type === "link" ?
+                                'background: #2E5077#; color: #16C47F;' : 'background: #2E5077#; color: #4CC9FE;',
+                                'lbl : ', lbl, $(this));
+                            $(this).attr('aria-label', lbl);
+                        } else {
+                            DEVMODE.on && DEVMODE.info && console.log(`%c ${type}`, type === "link" ?
+                                'background: #2E5077#; color: #16C47F;' : 'background: #2E5077#; color: #4CC9FE;',
+                                'lbl + msg : ', lbl + '  ' + msg, $(this));
+                            $(this).attr('aria-label', lbl + ' ' + msg);
+                        };
+                    } else if (txt.length > 1) {
+                        if (msg === '') {
+                            DEVMODE.on && DEVMODE.info && console.log(`%c ${type} `, type === "link" ?
+                                'background: #2E5077#; color: #16C47F;' : 'background: #2E5077#; color: #4CC9FE;',
+                                'txt : ', txt, $(this));
+                            $(this).attr('aria-label', txt);
+                        } else {
+                            DEVMODE.on && DEVMODE.info && console.log(`%c ${type} `, type === "link" ?
+                                'background: #2E5077#; color: #16C47F;' : 'background: #2E5077#; color: #4CC9FE;',
+                                'txt + msg : ', txt + '  ' + msg, $(this));
+                            $(this).attr('aria-label', txt + ' ' + msg);
+                        };
+                    } else if (alt && alt.length > 0) {
+                        if (msg === '') {
+                            DEVMODE.on && DEVMODE.info && console.log(`%c ${type} `, type === "link" ?
+                                'background: #2E5077#; color: #16C47F;' : 'background: #2E5077#; color: #4CC9FE;',
+                                'alt : ', alt, $(this));
+                            $(this).attr('aria-label', alt);
+                        } else {
+                            DEVMODE.on && DEVMODE.info && console.log(`%c ${type} `, type === "link" ?
+                                'background: #2E5077#; color: #16C47F;' : 'background: #2E5077#; color: #4CC9FE;',
+                                'alt + msg : ', alt + '  ' + msg, $(this));
+                            $(this).attr('aria-label', alt + ' ' + msg);
+                        };
+                    } else if (title) {
+                        if (msg === '' || title.indexOf(CURRENTTABMSG) > -1 || title.indexOf(NEWWINMSG) > -1) {
+                            DEVMODE.on && DEVMODE.info && console.log(`%c ${type} `, type === "link" ?
+                                'background: #2E5077#; color: #16C47F;' : 'background: #2E5077#; color: #4CC9FE;',
+                                'title : ', title, $(this));
+                            $(this).attr('aria-label', title);
+                        } else {
+                            DEVMODE.on && DEVMODE.info && console.log(`%c ${type} `, type === "link" ?
+                                'background: #2E5077#; color: #16C47F;' : 'background: #2E5077#; color: #4CC9FE;',
+                                'title + msg : ', title + '  ' + msg, $(this));
+                            $(this).attr('aria-label', title + ' ' + msg);
+                        };
+                    } else { // last default case
+                        DEVMODE.on && console.log('%c ⚠ check link label : ', 'background: #bada55; color: #117a65; ',
+                            msg, $(this));
+                    }
+                });
+            } catch (err) {
+                console.error('Error in appendOpensInText(): ', err)
+            }
+        }
+        //  Prepend "PDF" "WORD" "Excel" message to aria-label for linkNormalize()
+        function prependDocText(links = $([]), removeTitle = false) {
+            try {
+                links.each(function () {
+                    let href = $(this).attr('href');
+                    let download = $(this).attr('download');
+                    let docMessage = '';
+                    let currentLabel = $(this).attr('aria-label') && $.trim($(this).attr('aria-label').replace(/[\t,]/g, '').replace(/[\n,]/g, '').replace(/\"+/g, ''));
+                    if (typeof href == typeof undefined) {
+                        return; // if no href return
+                    }
+                    if (currentLabel && (currentLabel.indexOf(PDFTEXT) > -1 || currentLabel.indexOf(WORDTEXT) > -1 || currentLabel.indexOf(XLSTEXT) > -1 || currentLabel.indexOf(PDFDWNLDTEXT) > -1)) {
+                        return; // if message exist return
+                    }
+                    //create message
+                    if (href.indexOf('.doc') > -1) {
+                        docMessage = WORDTEXT;
+                    } else if (href.indexOf('.pdf') > -1) {
+                        if (typeof download !== typeof undefined) {
+                            $(this).attr('role', 'button');
+                            docMessage = PDFDWNLDTEXT;
+                        } else {
+                            docMessage = PDFTEXT;
+                        }
+                    } else if ($(this).attr('href').indexOf('.xls') > -1) {
+                        docMessage = XLSTEXT;
+                    } else {
+                        return; //if no doc return
+                    }
+
+                    //create label
+                    addMessageToLabel($(this), docMessage)
+                });
+            } catch (err) {
+                console.error('Error in prependDocText(): ', err)
+            }
+        }
+
+
+        // Email link fix for linkNormalize()
+        function emailLinkFix(link = $([])) {
+            if (link.text().indexOf('@') > -1) {
+                if (link.text().split(' ').length == 1) {
+                    link.attr('aria-label', function () {
+                        return 'שליחת אימייל' + ' ' + $(this).text();
+                    });
+                }
+            }
+        }
+        // Append external link text to aria-label for linkNormalize()
+        function appendExternalLinkText(links) {
+            try {
+                links.each(function () {
+                    let href = $(this).attr('href');
+                    let download = $(this).attr('download');
+                    var currentLabel = $(this).attr('aria-label');
+                    if (currentLabel && currentLabel.indexOf(EXTSITEMSG) > -1 || typeof download !== typeof undefined) {
+                        return; //if exist return
+                    } else if (typeof href == typeof undefined) {
+                        return; // if no href return
+                    }
+                    if ((href.indexOf('www') > -1 || href.indexOf('http') > -1) && href.indexOf(CURRENTLOCATION) == -1) {
+                        addMessageToLabel($(this), EXTSITEMSG)
+                    }
+                    
+                });
+            } catch (err) {
+                console.error('Error in appendExternalLinkText(): ', err)
+            }
+        }
+
+        function addMessageToLabel(elem , message){
+            let lblby = elem.attr('aria-labelledby');
+            let lbl = elem.attr('aria-label') && $.trim(elem.attr('aria-label').replace(/[\t,]/g, '').replace(/[\n,]/g, ''));
+            let txt = $.trim(elem.text().replace(/[\t,]/g, '').replace(/[\n,]/g, ''));
+            let alt = elem.find('img').attr('alt');
+            let title = elem.attr('title');
+            if (typeof lblby !== typeof undefined && lblby !== 'undefined') {
+                let newid = Math.random().toString(16).slice(2);;
+                elem.attr('aria-labelledby', lblby + ' ' + newid);
+                elem.append(`<span class="visuallyhidden linkOpenMsg" id="${newid}"> ${message} </span>`)
+            } else if (typeof lbl !== typeof undefined && lbl !== 'undefined') {
+                elem.attr('aria-label', lbl + ' ' + message);
+            } else if (txt.length > 1) {
+                elem.attr('aria-label', txt + ' ' + message);
+            } else if (alt && alt.length > 0) {
+                elem.attr('aria-label', alt + ' ' + message);
+            } else if (title) {
+                elem.attr('aria-label', title + ' ' + message);
+            } else { // last default case
+                DEVMODE.on && console.log('%c ⚠ check link label : ', 'background: #bada55; color: #117a65; ', $(this));
+            }
+        }
+
+    } catch (err) {
+        console.error('Error in linkNormalize(): ', err)
+    }
+}
