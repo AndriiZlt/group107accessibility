@@ -22,6 +22,7 @@ function linkNormalize(links) {
     try {
         links.each(function () {
             if ($(this).attr('tabindex') === '-1' || $(this).attr('data-skip-normalize') === 'true') { // quick return
+                DEVMODE.on && console.log('%c ⚠ skip normalizing : ', 'background: #bada55; color: #117a65; ', $(this));
                 return;
             }
             emailLinkFix($(this)); // add "send email" text to label if needed
