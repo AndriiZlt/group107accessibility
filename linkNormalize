@@ -1,3 +1,9 @@
+// * Function adds proper aria-label to all links including PDF, Word, Excel, Phone, Email
+* Don't forget to add proper CURRENTLOCATION 
+* You can skip normalizing by adding data-skip-normalize = "true" to the link
+*/
+
+//General constants
 const DEVMODE = {
     on: true, //Switch to TRUE to enter developer mode
     info: false,
@@ -215,3 +221,6 @@ function linkNormalize(links) {
         console.error('Error in linkNormalize(): ', err)
     }
 }
+
+//Use at the end of the main function
+linkNormalize($('a, *[role="link"]'));
