@@ -28,5 +28,5 @@ phoneLinkNormalize( $('a[href*=tel]') );
 
 //usage#2 - dynamic label
 $('a[href*=tel]').each(function () {
-    phoneLinkNormalize($(this), $(this).attr('aria-label').split(':')[0]);
+    phoneLinkNormalize($(this), 'dynamic label');
 })
