@@ -1,0 +1,32 @@
+// Create label to phone links
+function phoneLinkNormalize(links, label = '') {
+    links.each(function () {
+        let text = typeof $(this).text() !== typeof undefined ? $(this).text().replace(/[^0-9]/g, '') : ''
+        let title = $(this).attr('title');
+        var href = typeof $(this).attr('href') !== typeof undefined ? $(this).attr('href').replace(/[^0-9]/g, '') : '';
+        var tel = text.length > 0 ? text : href;
+        var spacedTel = '';
+        for (let i = 0; i < tel.length; i++) {
+            spacedTel += tel[i] + ' ';
+        }
+        var newLabel = '';
+        if (label !== '') {
+            newLabel = label + ' ' + spacedTel;
+        } else if (typeof title !== typeof undefined) {
+            newLabel = title + ' ' + spacedTel;
+        } else {
+            newLabel = 'טלפון' + ' ' + spacedTel;
+        }
+        var id = Math.random().toString(16).slice(2);
+        $(this).attr({ 'id': id, 'aria-label': newLabel, 'role': 'link' })
+    })
+}
+
+
+//usage#1 - global fix
+phoneLinkNormalize( $('a[href*=tel]') );
+
+//usage#2 - dynamic label
+$('a[href*=tel]').each(function () {
+    phoneLinkNormalize($(this), $(this).attr('aria-label').split(':')[0]);
+})
