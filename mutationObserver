@@ -1,0 +1,62 @@
+
+// Class mutation example
+$('.selector').each(function () {
+	var thisElement = $(this);
+    var observer = new MutationObserver(function () {
+        if(thisElement.hasClass('show')){
+		   //modal open handler
+        } else {
+		   //If needed modal close handler
+        }
+    });
+    observer.observe($(this)[0], { attributes: true , attributeFilter : ['class'] });
+})
+
+// Class - short example
+$('.selector').each(function () {
+	var thisElement = $(this);
+    var observer = new MutationObserver(function () {
+        // $('.active')
+    });
+    observer.observe($(this)[0], { attributes: true , attributeFilter : ['class'] });
+})
+
+
+// Style mutation example
+$('.dialog-wrapper .overlay').each(function(){
+  var thisEl=$(this);
+  var observer = new MutationObserver(function() {
+        if(thisEl.css('display') == 'block') {
+          //do something
+        } else {  }
+  }); 
+  observer.observe($(this)[0], { attributes : true, attributeFilter : ['style'] });
+})
+
+
+//Children mutation example
+
+$('.selector').each(function(){
+    // var thisEl=$(this);
+    const observer = new MutationObserver((mutations) => {
+        console.log(mutations);
+        //…
+    });
+    
+    observer.observe($(this)[0], {
+    attributes: true,
+    attributeFilter : ['class'],
+    childList: true,
+    subtree: true,
+    });
+})
+
+
+//Children short example
+
+$('#header ul.navbar-nav').each(function () {
+    var observer = new MutationObserver(function () {
+        $('ul.dropdown-menu.show').attr('aria-hidden','false');
+    });
+    observer.observe($(this)[0], { attributes: true , attributeFilter : ['class'] , childList: true , subtree: true, });
+})
