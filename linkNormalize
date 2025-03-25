@@ -12,8 +12,8 @@ const CURRENTLOCATION = "machar"; // Add current location
 const NEWTABMESSAGE = 'נפתח בחלון חדש';
 const NEWWINMSG = 'נפתח בחלון חדש';
 const EXTSITEMSG = 'מעבר לאתר חיצוני';
-const PDFTEXT = ' מסמך PDF להורדה או צפייה ';
-const PDFDWNLDTEXT = ' מסמך PDF להורדה ';
+const PDFTEXT = 'מסמך PDF להורדה או צפייה';
+const PDFDWNLDTEXT = 'מסמך PDF להורדה';
 const WORDTEXT = 'מסמך word להורדה';
 const XLSTEXT = 'מסמך excel להורדה';
 
