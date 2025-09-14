@@ -1,0 +1,549 @@
+import { EngineContext } from 'a-web.abstraction';
+import { Utilities } from 'a-web.common';
+
+
+//#region Update ===================================================================================================================
+
+const DEVMODE = {
+    on: false, //Switch to TRUE to enter simple developer mode. Only warnings and errors
+    info: false, //Switch to TRUE to see all info
+    lastUpdatedAt: '5/9/25 17:10'
+}
+const CURRENTLOCATION = "education.histadrut.org.il"; // Actual site address <<<<<<<<<<<<<<<<<<<
+const NEWTABMESSAGE = 'נפתח בחלון חדש';
+const NEWWINMSG = 'נפתח בחלון חדש';
+const EXTSITEMSG = 'מעבר לאתר חיצוני';
+const PDFTEXT = 'מסמך PDF לצפייה או הורדה';
+const PDFDWNLDTEXT = 'מסמך PDF להורדה';
+const WORDTEXT = 'מסמך word להורדה';
+const XLSTEXT = 'מסמך excel להורדה';
+const CURRENTTABMSG = 'נפתח בחלון נוכחי';
+
+export default function fix(this: EngineContext): void {
+    try {
+        DEVMODE.on && devHelpers('Before');
+
+        generalFixes();
+        homePage();
+        // עמודים אחרים
+        linkNormalize($('a, *[role="link"]'));
+
+        DEVMODE.on && devHelpers('After');
+    }
+    catch (err) {
+        console.error('🛑 Error in accessibility update', err.message);
+    }
+}
+
+//#region Pages ---------------------------------------------------------------------------------------------------------------
+// Header, Footer and other relevant for all pages fixes
+function generalFixes() {
+    try {
+
+
+        // תיקונים כללים
+
+        // מתקן את נאות הפוקוס
+        $('<style>')
+            .prop('type', 'text/css')
+            .html(`
+                *:focus {
+                    background-color: transparent !important;
+                    outline: 2px solid blue !important;
+                    outline-offset: 1px;
+                    color: black !important;
+                }
+            `)
+            .appendTo('head');
+
+        $('body').each(function () {
+            var observer = new MutationObserver(function () {
+                if ($('.mk-aweb-keyboard').length > 0) {
+                    $('body').removeClass('mk-aweb-keyboard');
+                }
+            });
+            observer.observe($(this)[0], { attributes: true, attributeFilter: ['class'] });
+        })
+
+    } catch (err) {
+        console.error('🛑 Error in generalFixes()', err.message)
+    }
+
+}
+
+// עמוד הבית
+function homePage() {
+    if (!document.title.includes("דף הבית")) return;
+    
+    // תיקונים
+
+}
+
+
+
+//#endregion
+//#region Functions ---------------------------------------------------------------------------------------------------------------
+
+
+// Modal window open/close full handler
+function openModalNormalize($openButton, $modal, $closeButton, $firstFocus, timeout = 2000, trapArrows = false) {
+    if ($openButton.length == 0 || $modal.length == 0 || $closeButton.length == 0) {
+        DEVMODE.on && console.info('%c ⚠ openModalNormalize quick return ', 'background: #bada55; color: #117a65; ', $openButton.length, $modal.length, $closeButton.length);
+        return;
+    };
+    //Set attributes
+    var modalId = $modal.attr({ 'role': 'dialog', 'aria-modal': 'true' }).attr('id');
+    if (typeof modalId === typeof undefined) {
+        modalId = Utilities.unique();
+        $modal.attr({ 'id': modalId });
+    }
+    $openButton.attr({ 'aria-expanded': 'false', 'role': 'button', 'aria-haspopup': 'dialog', 'aria-controls': `${modalId}` })
+    //Trap focus inside modal
+    var tabbable = $modal.find('a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, *[tabindex], *[contenteditable]');
+
+    connectTabs(tabbable.last(), tabbable.first());
+
+    if (trapArrows) {
+    }
+    //Set focus on close button
+    var currentOpenButton: JQuery; //In case there are many open buttons
+    $openButton.on('click', function (e) {
+        e.preventDefault();
+        currentOpenButton = $(this);
+        $(this).attr({ 'aria-expanded': 'true' });
+        //redirect last tab to first 
+        setTimeout(function () {
+            $firstFocus.focus();
+        }, timeout)
+    });
+    //Set focus on open button after close modal
+    $closeButton.click(function (e) {
+        tabbable.first().off('keydown');
+        tabbable.last().off('keydown');
+        setTimeout(function () {
+            currentOpenButton.attr({ 'aria-expanded': 'false' }).focus();
+        }, timeout)
+    });
+    //Esc handler
+    $modal.on('keydown', function (e) {
+        if (e.key == "Escape") {
+            $closeButton.click();
+        }
+    });
+    DEVMODE.on && DEVMODE.info && console.info('openModalNormalize(): ', $modal);
+}
+
+// Create label to phone links
+function phoneLinkNormalize(links, label = '', notLink = false) {
+    links.each(function () {
+        let text = typeof $(this).text() !== typeof undefined ? $(this).text().replace(/[^0-9]/g, '') : ''
+        let title = $(this).attr('title');
+        var href = typeof $(this).attr('href') !== typeof undefined ? $(this).attr('href').replace(/[^0-9]/g, '') : '';
+        var tel = text.length > 0 ? text : href;
+        var spacedTel = '';
+        for (let i = 0; i < tel.length; i++) {
+            //spacedTel += tel[i] + ' ';
+            spacedTel += tel[i];
+        }
+        var newLabel = '';
+        //debug
+        //$(this).attr('data-debug') === "true" && console.info('phoneLinkNormalize: label=', label + ' title=' + title + ' tel:' + spacedTel, $(this));
+        if (label !== '') {
+            newLabel = label + ' ' + spacedTel;
+        } else if (typeof title !== typeof undefined) {
+            newLabel = title + ' ' + spacedTel;
+        } else {
+            newLabel = 'מספר טלפון' + ' ' + spacedTel;
+        }
+        var id = Math.random().toString(16).slice(2);
+        $(this).attr({ 'id': id, 'aria-label': newLabel });
+        if (!notLink) {
+            $(this).attr({ 'role': 'link' });
+        }
+        $(this).removeAttr('title');
+    })
+}
+
+//Console element
+function print(message = '', elem = $()) {
+    if (elem.length > 0) {
+        DEVMODE.on && console.info(`%c▶▶ ${message} `, 'background: #FBF3C1; color: #102E50', elem);
+    } else {
+        DEVMODE.on && console.info(`%c▶▶${message} `, 'background: #FBF3C1; color: #102E50');
+    }
+}
+
+//Connect 2 elems navigation
+function connectTabs(prev, next, type = "normal", horizontal = false) {
+    // types =>  normal: firstElem <=> secondElem,  forward: firstElem => secondElem , backwards: firstElem <= secondElem 
+    prev.attr({ 'aria-hidden': 'false', 'tabindex': '0' });
+    (type === "normal" || type === "forward") && prev.on('keydown', function (e) {
+        if ((e.keyCode === 9 && !e.shiftKey) || (horizontal && e.keyCode == 37) || (!horizontal && e.keyCode == 40)) { //tab, left , down
+            e.preventDefault();
+            setTimeout(function () {
+                next.focus();
+            }, 100)
+
+        }
+    });
+    next.attr({ 'aria-hidden': 'false', 'tabindex': '0' });
+    (type === "normal" || type === "backwards") && next.on('keydown', function (e) {
+        if ((e.keyCode === 9 && e.shiftKey) || (horizontal && e.keyCode == 39) || (!horizontal && e.keyCode == 38)) { //shift+tab, right , up
+            e.preventDefault();
+            setTimeout(function () {
+                prev.focus();
+            }, 100)
+        }
+    });
+
+    var cancelEventListeners = function () {
+        prev.off('keydown');
+        next.off('keydown');
+    }
+    return cancelEventListeners;
+}
+
+// Add proper messages to links on the page
+function linkNormalize(links) {
+    try {
+        links.each(function () {
+            if ($(this).attr('tabindex') === '-1' || $(this).attr('data-skip-normalize') === 'true') { // quick return
+                DEVMODE.on && DEVMODE.info && console.info('%c ⚠ skip normalizing : ', 'background: #bada55; color: #117a65; ', $(this));
+                return;
+            }
+            prependDocText($(this), true); // prepend 'word' or 'pdf' to label if needed
+            appendExternalLinkText($(this)); // apend external link to label if needed
+            appendOpensInText($(this)); // apend 'opens in' to label if needed
+        })
+
+        // Append "opens in" text to aria-label for linkNormalize()
+        function appendOpensInText(links = $([])) {
+            try {
+                links.each(function () {
+                    let href = $(this).attr('href');
+                    let title = $(this).attr('title');
+                    let download = $(this).attr('download');
+                    let target = $(this).attr('target');
+                    let lbl = $(this).attr('aria-label') && $.trim($(this).attr('aria-label').replace(/[\t,]/g, '').replace(/[\n,]/g, '').replace(/\"+/g, ''));
+                    let lblby = $(this).attr('aria-labelledby');
+                    let txt = $.trim($(this).text().replace(/[\t,]/g, '').replace(/[\n,]/g, '').replace(/\"+/g, ''));
+                    let alt = $(this).find('img').attr('alt');
+                    let type = $(this).attr('role') === "button" ? 'button' : 'link'; //
+                    if (lbl && (lbl.indexOf(CURRENTTABMSG) > -1 || lbl.indexOf(NEWWINMSG) > -1)) {
+                        return; //if exist return
+                    } else if (typeof href == typeof undefined) {
+                        return; // if no href return
+                    }
+                    let msg = '';
+                    if (target === '_blank') {
+                        msg = NEWTABMESSAGE;
+                    } else if (target === '_new') {
+                        msg = NEWWINMSG;
+                    } else if (target === '') {
+                        //msg = CURRENTTABMSG;
+                    } else if (href.indexOf('.pdf') > -1 && typeof download == typeof undefined) {
+                        //msg = CURRENTTABMSG;
+                    } else if ((href.indexOf('www') > -1 || href.indexOf('http') > -1) && typeof target ==
+                        typeof undefined) {
+                        //msg = CURRENTTABMSG;
+                    }
+                    //debug
+                    $(this).attr('data-debug') === "true" && console.info('appendOpensInText: ', msg, $(this));
+                    if (typeof lblby !== typeof undefined && lblby !== 'undefined') {
+                        let newid = Math.random().toString(16).slice(2);;
+                        $(this).attr('aria-labelledby', lblby + ' ' + newid);
+                        $(this).append(`<span class="visuallyhidden linkOpenMsg" id="${newid}"> ${msg} </span>`)
+                    } else if (typeof lbl !== typeof undefined && lbl !== 'undefined') {
+                        if (msg === '') {
+                            DEVMODE.on && DEVMODE.info && console.info(`%c ${type}`, type === "link" ?
+                                'background: #2E5077#; color: #16C47F;' : 'background: #2E5077#; color: #4CC9FE;',
+                                'lbl : ', lbl, $(this));
+                            $(this).attr('aria-label', lbl);
+                        } else {
+                            DEVMODE.on && DEVMODE.info && console.info(`%c ${type}`, type === "link" ?
+                                'background: #2E5077#; color: #16C47F;' : 'background: #2E5077#; color: #4CC9FE;',
+                                'lbl + msg : ', lbl + '  ' + msg, $(this));
+                            $(this).attr('aria-label', lbl + ' ' + msg);
+                        };
+                    } else if (txt.length > 1) {
+                        if (msg === '') {
+                            DEVMODE.on && DEVMODE.info && console.info(`%c ${type} `, type === "link" ?
+                                'background: #2E5077#; color: #16C47F;' : 'background: #2E5077#; color: #4CC9FE;',
+                                'txt : ', txt, $(this));
+                            $(this).attr('aria-label', txt);
+                        } else {
+                            DEVMODE.on && DEVMODE.info && console.info(`%c ${type} `, type === "link" ?
+                                'background: #2E5077#; color: #16C47F;' : 'background: #2E5077#; color: #4CC9FE;',
+                                'txt + msg : ', txt + '  ' + msg, $(this));
+                            $(this).attr('aria-label', txt + ' ' + msg);
+                        };
+                    } else if (alt && alt.length > 0) {
+                        if (msg === '') {
+                            DEVMODE.on && DEVMODE.info && console.info(`%c ${type} `, type === "link" ?
+                                'background: #2E5077#; color: #16C47F;' : 'background: #2E5077#; color: #4CC9FE;',
+                                'alt : ', alt, $(this));
+                            $(this).attr('aria-label', alt);
+                        } else {
+                            DEVMODE.on && DEVMODE.info && console.info(`%c ${type} `, type === "link" ?
+                                'background: #2E5077#; color: #16C47F;' : 'background: #2E5077#; color: #4CC9FE;',
+                                'alt + msg : ', alt + '  ' + msg, $(this));
+                            $(this).attr('aria-label', alt + ' ' + msg);
+                        };
+                    } else if (title) {
+                        if (msg === '' || title.indexOf(CURRENTTABMSG) > -1 || title.indexOf(NEWWINMSG) > -1) {
+                            DEVMODE.on && DEVMODE.info && console.info(`%c ${type} `, type === "link" ?
+                                'background: #2E5077#; color: #16C47F;' : 'background: #2E5077#; color: #4CC9FE;',
+                                'title : ', title, $(this));
+                            $(this).attr('aria-label', title);
+                        } else {
+                            DEVMODE.on && DEVMODE.info && console.info(`%c ${type} `, type === "link" ?
+                                'background: #2E5077#; color: #16C47F;' : 'background: #2E5077#; color: #4CC9FE;',
+                                'title + msg : ', title + '  ' + msg, $(this));
+                            $(this).attr('aria-label', title + ' ' + msg);
+                        };
+                    } else { // last default case
+                        DEVMODE.on && console.info('%c ⚠ check link label : ', 'background: #bada55; color: #117a65; ',
+                            msg, $(this));
+                    }
+                });
+            } catch (err) {
+                console.error('Error in appendOpensInText(): ', err)
+            }
+        }
+        //  Prepend "PDF" "WORD" "Excel" message to aria-label for linkNormalize()
+        function prependDocText(links = $([]), removeTitle = false) {
+            try {
+                links.each(function () {
+                    let href = $(this).attr('href');
+                    let download = $(this).attr('download');
+                    let docMessage = '';
+                    let currentLabel = $(this).attr('aria-label') && $.trim($(this).attr('aria-label').replace(/[\t,]/g, '').replace(/[\n,]/g, '').replace(/\"+/g, ''));
+                    if (typeof href == typeof undefined) {
+                        return; // if no href return
+                    }
+                    if (currentLabel && (currentLabel.indexOf(PDFTEXT) > -1 || currentLabel.indexOf(WORDTEXT) > -1 || currentLabel.indexOf(XLSTEXT) > -1 || currentLabel.indexOf(PDFDWNLDTEXT) > -1)) {
+                        return; // if message exist return
+                    }
+                    //create message
+                    if (href.indexOf('.doc') > -1) {
+                        docMessage = WORDTEXT;
+                    } else if (href.indexOf('.pdf') > -1) {
+                        if (typeof download !== typeof undefined) {
+                            $(this).attr('role', 'button');
+                            docMessage = PDFDWNLDTEXT;
+                        } else {
+                            docMessage = PDFTEXT;
+                        }
+                    } else if ($(this).attr('href').indexOf('.xls') > -1) {
+                        docMessage = XLSTEXT;
+                    } else {
+                        return; //if no doc return
+                    }
+
+                    //create label
+                    addMessageToLabel($(this), docMessage)
+                });
+            } catch (err) {
+                console.error('Error in prependDocText(): ', err)
+            }
+        }
+
+        // Append external link text to aria-label for linkNormalize()
+        function appendExternalLinkText(links) {
+            try {
+                links.each(function () {
+                    let href = $(this).attr('href');
+                    let download = $(this).attr('download');
+                    var currentLabel = $(this).attr('aria-label');
+                    if (currentLabel && currentLabel.indexOf(EXTSITEMSG) > -1 || typeof download !== typeof undefined) {
+                        return; //if exist return
+                    } else if (typeof href == typeof undefined) {
+                        return; // if no href return
+                    }
+                    if ((href.indexOf('www') > -1 || href.indexOf('http') > -1) && href.indexOf(CURRENTLOCATION) == -1) {
+                        addMessageToLabel($(this), EXTSITEMSG)
+                    }
+
+                });
+            } catch (err) {
+                console.error('Error in appendExternalLinkText(): ', err)
+            }
+        }
+
+        function addMessageToLabel(elem, message) {
+            let lblby = elem.attr('aria-labelledby');
+            let lbl = elem.attr('aria-label') && $.trim(elem.attr('aria-label').replace(/[\t,]/g, '').replace(/[\n,]/g, '').replace(/\"+/g, ''));
+            let txt = $.trim(elem.text().replace(/[\t,]/g, '').replace(/[\n,]/g, '').replace(/\"+/g, ''));
+            let alt = elem.find('img').attr('alt');
+            let title = elem.attr('title');
+            if (typeof lblby !== typeof undefined && lblby !== 'undefined') {
+                let newid = Math.random().toString(16).slice(2);;
+                elem.attr('aria-labelledby', lblby + ' ' + newid);
+                elem.append(`<span class="visuallyhidden linkOpenMsg" id="${newid}"> ${message} </span>`)
+            } else if (typeof lbl !== typeof undefined && lbl !== 'undefined') {
+                elem.attr('aria-label', lbl + ' ' + message);
+            } else if (txt.length > 1) {
+                elem.attr('aria-label', txt + ' ' + message);
+            } else if (alt && alt.length > 0) {
+                elem.attr('aria-label', alt + ' ' + message);
+            } else if (title) {
+                elem.attr('aria-label', title + ' ' + message);
+            } else { // last default case
+                DEVMODE.on && console.info('%c ⚠ check link label : ', 'background: #bada55; color: #117a65; ', $(this));
+            }
+        }
+
+    } catch (err) {
+        console.error('Error in linkNormalize(): ', err)
+    }
+}
+
+// #endregion
+
+//#region Devmode ---------------------------------------------------------------------------------------------------------------
+
+//DEVMODE Get focused elem  
+function devHelpers(type) {
+    switch (type) {
+        case 'Before':
+            var msg = ' ==================== Dev mode ======================='
+            var background = '#23486A';
+            var color = '#98D8EF';
+            console.info(`%c ${msg} `, `background: ${background}; color: ${color}`);
+            //headingAudit('Before');
+            break;
+        case 'After':
+            headingAudit('After');
+            getFocusedElem();
+            getKeyPress();
+            getTitleAndLang();
+            tabindexAudit();
+            console.info(`Accessibility updated ${DEVMODE.lastUpdatedAt}`);
+            break;
+        default:
+            console.info('Devmode without type');
+    }
+}
+
+let getKeyPress = () => {
+    $(document).on('keydown', function (e) {
+        console.info(` %c ⌨️ ${e.key} `, 'background: #23486A; color: #fae5d3');
+    });
+}
+
+function getFocusedElem() {
+    let focusIndex = 1;
+    $(window).keydown(function (event) {
+        setTimeout(function () {
+            console.info(` %c ◎ ${focusIndex} :`, 'background: #23486A; color: #fae5d3', $(':focus'));
+            focusIndex++;
+        }, 300);
+    });
+    //Get clicked element
+    $(document).click(function (e) {
+        console.info(` %c ➤ ${focusIndex} :`, 'background: #23486A; color: #fae5d3', e.target);
+        focusIndex++;
+    });
+}
+//Get title and lang attr 29.7.25
+function getTitleAndLang() {
+    var pageTitle = $(document).attr('title');
+    var lang = $('html').attr('lang');
+    if ((!pageTitle || pageTitle.indexOf($('h1').text()) == -1) && pageTitle.indexOf($('בית').text()) == -1) {
+        console.info(`%c ✘ Title: ${pageTitle} `, `background: #EC5E5E; color: #FFF1D8`);
+    } else {
+        console.info(`%c ✔ Title: ${pageTitle} `, 'background: #117a65; color: #bada55');
+    }
+
+    if (!lang || lang.length == 0 || lang.indexOf("he") == -1) {
+        console.info(`%c ✘ Lang: ${lang} `, `background: #EC5E5E; color: #FFF1D8`)
+    } else {
+        console.info(`%c ✔ Lang: ${lang} `, 'background: #117a65; color: #bada55')
+    }
+}
+
+function tabindexAudit() {
+    setTimeout(() => {
+        var elems = $('[tabindex][tabindex!="0"][tabindex!="-1"]')
+        if (elems.length > 0) {
+            console.info('%c ✘ Check tabindex', `background: #FF6F3C; color: #7B4019`, elems);
+        } else {
+            DEVMODE.info && console.info('%c ✔ Tabindex Ok ', 'background: #117a65; color: #bada55')
+        }
+    }, 5000)
+
+}
+
+//DEVMODE Get headings status  
+function headingAudit(title) {
+    var msg = '=================== ' + title + ' ======================'
+    var background = title.indexOf('Before') > -1 ? '#23486A' : '#5b2c6f';
+    var color = title.indexOf('Pre') > -1 ? '#98D8EF' : '#C5BAFF';
+    console.info(`%c ${msg} `, `background: ${background}; color: ${color}`);
+    //regions
+    let header = $('header, #header, *[role="banner"]');
+    let footer = $('footer, #footer, *[role=contentinfo]')
+    let main = $('main , *[role=main]');
+    if (main.length == 0 || main.length > 1 || header.length == 0 || header.length > 1 || footer.length == 0 || footer.length > 1) {
+        console.info('%c ⚠ Check Regions ', 'background: #7d6608; color: #fae5d3', '<header>:', header.length, '<main>:', main.length, '<footer>:', footer.length);
+    } else {
+        console.info('%c ✔ Regions ', 'background: #117a65; color: #bada55', '<header>:', header.length, '<main>:', main.length, '<footer>:', footer.length);
+    }
+    //headings
+    var h1 = $('h1:not([aria-level="2"]):not([aria-level="3"]):not([aria-level="4"]):not([aria-level="5"]):not([aria-level="6"]):not([role="none"]):not([role="presentation"]), *[aria-level="1"]');
+    if (h1.length == 0) {
+        console.info('%c ✘ ', 'background: #a04000; color: #fae5d3', ' Missing H1 ');
+    } else if (h1.length > 1) {
+        console.info('%c ⚠ ', 'background: #7d6608; color: #fae5d3', ' Many H1 :', h1);
+    } else {
+        DEVMODE.on && DEVMODE.info && console.info('%c ✔ ', 'background: #117a65; color: #bada55', ` H1 : ${h1.text()} `, h1);
+    }
+    //h2
+
+    //header
+    countHeadings(header, true);
+    //main
+    countHeadings(main, true);
+    var sections = main.find('section , *[role="region"]');
+    sections.length === 0 && console.info('%c ⚠ No sections in <main>', 'background: #7d6608; color: #fae5d3');
+    sections.each(function () {
+        if ($(this).attr('aria-hidden') === 'true' || $(this).attr('data-skip-audit')) {
+            DEVMODE.on && DEVMODE.info && console.info('%c ✔ ', 'background: #117a65; color: #bada55',
+                `Section № ${sections.index($(this)) + 1}, #${$(this).attr('id') || ''}: aria-hidden`, $(this), ', data-skip-audit:', $(this).attr('data-skip-audit'));
+            return // quick return
+        }
+        let headings = countHeadings($(this));
+        let sumHeadings = headings.h1.length + headings.h2.length + headings.h3.length + headings.h4.length + headings.h5.length + headings.h6.length;
+        if ($(this).children().length === 0) {
+            DEVMODE.on && DEVMODE.info && console.info('%c ✔ ', 'background: #117a65; color: #bada55',
+                ` Section № ${sections.index($(this)) + 1}, #${$(this).attr('id') || ''}: empty`, $(this))
+        } else if ((headings.h1.length == 0 && headings.h2.length == 0) || (headings.h1.length == 0 && headings.h2.length > 1) || (headings.h2.length == 0 && (headings.h3.length + headings.h4.length + headings.h5.length + headings.h6.length) > 0) || (headings.h3.length == 0 && (headings.h4.length + headings.h5.length + headings.h6.length) > 0) || (headings.h4.length == 0 && (headings.h5.length + headings.h6.length) > 0) || (headings.h5.length == 0 && (headings.h6.length) > 0) || sumHeadings == 0) {
+            console.info('%c ⚠ ', 'background: #7d6608; color: #fae5d3',
+                ` Section № ${sections.index($(this)) + 1}, #${$(this).attr('id') || ''}: h1:${headings.h1.length} h2:${headings.h2.length} h3:${headings.h3.length} h4:${headings.h4.length} h5:${headings.h5.length} h6:${headings.h6.length}`,
+                $(this));
+        } else {
+            DEVMODE.on && DEVMODE.info && console.info('%c ✔ ', 'background: #117a65; color: #bada55',
+                ` Section № ${sections.index($(this)) + 1}, #${$(this).attr('id') || ''}: h1:${headings.h1.length} h2:${headings.h2.length} h3:${headings.h3.length} h4:${headings.h4.length} h5:${headings.h5.length} h6:${headings.h6.length}`,
+                $(this))
+        }
+    })
+
+    //footer
+    countHeadings(footer, true);
+
+
+    function countHeadings(section, print = false) {
+        var h1 = section.find('h1:not([aria-level="2"]):not([aria-level="3"]):not([aria-level="4"]):not([aria-level="5"]):not([aria-level="6"]):not([role="presentation"]):not([role="none"]), *[aria-level="1"]');
+        var h2 = section.find('h2:not([aria-level="1"]):not([aria-level="3"]):not([aria-level="4"]):not([aria-level="5"]):not([aria-level="6"]):not([role="presentation"]):not([role="none"]), *[aria-level="2"]');
+        var h3 = section.find('h3:not([aria-level="1"]):not([aria-level="2"]):not([aria-level="4"]):not([aria-level="5"]:not([aria-level="6"])):not([role="presentation"]):not([role="none"]), *[aria-level="3"]');
+        var h4 = section.find('h4:not([aria-level="1"]):not([aria-level="2"]):not([aria-level="3"]):not([aria-level="5"]):not([aria-level="6"]):not([role="presentation"]):not([role="none"]), *[aria-level="4"]');
+        var h5 = section.find('h5:not([aria-level="1"]):not([aria-level="2"]):not([aria-level="3"]):not([aria-level="4"]):not([aria-level="6"]):not([role="presentation"]):not([role="none"]), *[aria-level="5"]');
+        var h6 = section.find('h6:not([aria-level="1"]):not([aria-level="2"]):not([aria-level="3"]):not([aria-level="4"]):not([aria-level="5"]):not([role="presentation"]):not([role="none"]), *[aria-level="6"]');
+        print && console.info(`%c <${section.selector.split(",")[0]}> `, 'background: #71f3d5; color: #102E50', `  h1:${h1.length} h2:${h2.length} h3:${h3.length} h4:${h4.length} h5:${h5.length} h6:${h6.length}`);
+
+        return { h1, h2, h3, h4, h5, h6 };
+    }
+}
+
+// #endregion DEVMODE
+//#endregion Update=================================================================================================================== 
