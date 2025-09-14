@@ -174,11 +174,11 @@ function print(message = '', elem = $()) {
 }
 
 //Connect 2 elems navigation
-function connectTabs(prev, next, type = "normal", horizontal = false) {
+function connectTabs(prev, next, horizontal = false) {
     // types =>  normal: firstElem <=> secondElem,  forward: firstElem => secondElem , backwards: firstElem <= secondElem 
     prev.attr({ 'aria-hidden': 'false', 'tabindex': '0' });
-    (type === "normal" || type === "forward") && prev.on('keydown', function (e) {
-        if ((e.keyCode === 9 && !e.shiftKey) || (horizontal && e.keyCode == 37) || (!horizontal && e.keyCode == 40)) { //tab, left , down
+    prev.on('keydown', function (e) {
+        if ((e.keyCode === 9 && !e.shiftKey) || (horizontal && e.keyCode == 37) || (!horizontal && e.keyCode == 40)) {
             e.preventDefault();
             setTimeout(function () {
                 next.focus();
@@ -187,8 +187,8 @@ function connectTabs(prev, next, type = "normal", horizontal = false) {
         }
     });
     next.attr({ 'aria-hidden': 'false', 'tabindex': '0' });
-    (type === "normal" || type === "backwards") && next.on('keydown', function (e) {
-        if ((e.keyCode === 9 && e.shiftKey) || (horizontal && e.keyCode == 39) || (!horizontal && e.keyCode == 38)) { //shift+tab, right , up
+    next.on('keydown', function (e) {
+        if ((e.keyCode === 9 && e.shiftKey) || (horizontal && e.keyCode == 39) || (!horizontal && e.keyCode == 38)) { 
             e.preventDefault();
             setTimeout(function () {
                 prev.focus();
@@ -202,7 +202,6 @@ function connectTabs(prev, next, type = "normal", horizontal = false) {
     }
     return cancelEventListeners;
 }
-
 // Add proper messages to links on the page
 function linkNormalize(links) {
     try {
