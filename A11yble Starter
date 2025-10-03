@@ -495,7 +495,7 @@ function headingAudit(title) {
     } else if (h1.length > 1) {
         console.info('%c ⚠ ', 'background: #7d6608; color: #fae5d3', ' Many H1 :', h1);
     } else {
-        DEVMODE.on && DEVMODE.info && console.info('%c ✔ ', 'background: #117a65; color: #bada55', ` H1 : ${h1.text()} `, h1);
+        DEVMODE.on && console.info('%c ✔ ', 'background: #117a65; color: #bada55', ` H1 : ${h1.text()} `, h1);
     }
     //h2
 
