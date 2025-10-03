@@ -26,7 +26,7 @@ export default function fix(this: EngineContext): void {
         generalFixes();
         homePage();
         // עמודים אחרים
-        linkNormalize($('a, *[role="link"]'));
+        linkNormalize($('a:not([role]), a[role="link"], [role="link"]:not(a)'));
 
         DEVMODE.on && devHelpers('After');
     }
