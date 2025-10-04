@@ -480,9 +480,9 @@ function headingAudit(title) {
     var color = title.indexOf('Pre') > -1 ? '#98D8EF' : '#C5BAFF';
     console.info(`%c ${msg} `, `background: ${background}; color: ${color}`);
     //regions
-    let header = $('header[role!="banner"], [role="banner"]');
-    let footer = $('footer[role!="contentinfo"], [role="contentinfo"]');
-    let main = $('main[role!="main"], [role="main"]');
+    let header = $('header:not([role]), [role="banner"]');
+    let main   = $('main:not([role]), [role="main"]');
+    let footer = $('footer:not([role]), [role="contentinfo"]');
     if (main.length == 0 || main.length > 1 || header.length == 0 || header.length > 1 || footer.length == 0 || footer.length > 1) {
         console.info('%c ⚠ Check Regions ', 'background: #7d6608; color: #fae5d3', '<header>:', header.length, '<main>:', main.length, '<footer>:', footer.length);
     } else {
