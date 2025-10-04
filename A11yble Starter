@@ -73,7 +73,9 @@ function generalFixes() {
 
 // עמוד הבית
 function homePage() {
-    if (!document.title.includes("דף הבית")) return;
+    // if ($('h1').text() === "") return;
+    // if (!document.title.includes("דף הבית")) return;
+    // if (!document.title.trim() === '') return;
     
     // תיקונים
 
