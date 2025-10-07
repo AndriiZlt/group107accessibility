@@ -1,0 +1,49 @@
+/**
+ * Normalizes list accessibility structure according to WCAG and ARIA best practices.
+ * Adds roles and ARIA labels to <ul>/<ol> wrappers and their children.
+ *
+ * @param {jQuery} listWrapper - jQuery collection of list wrapper elements (<ul>, <ol>, etc.)
+ * @param {string|jQuery} title - Either a text label or a jQuery element used as the visual title/heading
+ */
+function listNormalize(listWrapper, title) {
+    // Assign ARIA role 'list' to the wrapper and 'listitem' to its child elements (except headings)
+    listWrapper.each(function () {
+        $(this)
+            .attr({ 'role': 'list' }) // Mark wrapper as a list
+            .children()
+            .each(function () {
+                // Skip headings (e.g., <h2>, <h3>) – they are not list items
+                if ($(this).prop("tagName").indexOf('H') == -1) {
+                    $(this).attr({ 'role': 'listitem' });
+                }
+            });
+    });
+
+    // --- Case 1: title is a plain string (no DOM element provided)
+    if (typeof title == 'string') {
+        listWrapper.each(function () {
+            // Apply aria-label directly to the list
+            $(this).attr({ 'aria-label': title });
+        });
+        return title;
+    }
+
+    // --- Case 2: title is a jQuery element (usually a visible heading)
+    else {
+        // Try to get its ID
+        var id = title.attr('id');
+
+        // If the heading has no ID, create a unique one
+        if (!id) {
+            id = 'aria-' + crypto.randomUUID();
+            title.attr({ 'id': id });
+        }
+
+        // Link each list to the heading using aria-labelledby
+        listWrapper.each(function () {
+            $(this).attr({ 'aria-labelledby': id });
+        });
+
+        return id;
+    }
+}
