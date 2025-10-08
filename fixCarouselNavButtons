@@ -1,0 +1,51 @@
+
+/**
+ * Accessibility Utility: Fix carousel/slider navigation buttons focus behavior
+ *
+ * Description:
+ * Makes only the active navigation button (aria-current="true") focusable,
+ * improving keyboard and screen reader accessibility.
+ *
+ * Usage:
+ * Paste this snippet and your slider’s HTML into ChatGPT.
+ * ChatGPT will adjust selectors and attributes for your specific structure.
+ *
+ * ChatGPT prompt:
+ * "Adapt this accessibility utility to my slider’s HTML.
+ * Keep the same accessibility logic but match my element selectors."
+ */
+
+function fixCarouselNavButtons() {
+  const $buttons = $('.carousel-nav-button'); // TODO: update selector
+  updateButtons();
+
+  const observer = new MutationObserver(function (mutations) {
+    mutations.forEach(function (mutation) {
+      if (
+        mutation.type === 'attributes' &&
+        mutation.attributeName === 'aria-current'
+      ) {
+        updateButtons();
+      }
+    });
+  });
+
+  $buttons.each(function () {
+    observer.observe(this, { attributes: true });
+  });
+
+  function updateButtons() {
+    $buttons.each(function () {
+      const $btn = $(this);
+      const isActive = $btn.attr('aria-current') === 'true';
+      if (isActive) {
+        $btn.removeAttr('aria-hidden').attr('tabindex', '0');
+      } else {
+        $btn.attr({
+          'aria-hidden': 'true',
+          tabindex: '-1'
+        });
+      }
+    });
+  }
+}
