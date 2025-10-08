@@ -1,0 +1,380 @@
+// =============================================================================================
+// 🌐 CONFIGURATION
+// =============================================================================================
+
+const CURRENTLOCATION = "www.url.com"; // 🌍 Main domain of the site
+
+const DEVMODE = {
+  on: true, // ⚠️ Turn FALSE before publishing
+  info: false, // Show detailed logs in console
+  lastUpdatedAt: '05/10/25 16:00'
+};
+
+// Common link messages
+const NEWTABMESSAGE = 'נפתח בכרטיסיה חדשה';
+const NEWWINMSG = 'נפתח בחלון חדש';
+const EXTSITEMSG = 'מעבר לאתר חיצוני';
+const PDFTEXT = 'מסמך PDF לצפייה או הורדה';
+const PDFDWNLDTEXT = 'מסמך PDF להורדה';
+const WORDTEXT = 'מסמך Word להורדה';
+const XLSTEXT = 'מסמך Excel להורדה';
+const CURRENTTABMSG = 'נפתח בחלון נוכחי';
+
+
+// =============================================================================================
+// 🧠 MAIN EXECUTION
+// =============================================================================================
+
+DEVMODE.on && devHelpers('Before'); 
+
+generalFixes();          // Applies global fixes
+homePage();              // Page-specific logic (customize per site)
+linkNormalize($('a'));   // Normalizes all links accessibility-wise
+
+DEVMODE.on && devHelpers('After');
+
+
+// =============================================================================================
+// 🧩 PAGE LOGIC
+// =============================================================================================
+
+// Header/Footer/global fixes
+function generalFixes() {
+  try {
+    // TODO: Add specific header/footer or layout adjustments here
+  } catch (err) {
+    console.error('🛑 Error in generalFixes()', err.message);
+  }
+}
+
+// Homepage specific logic
+function homePage() {
+  // Example:
+  // if (!document.title.includes("Home")) return;
+  // console.info("Running homepage fixes");
+}
+
+
+// =============================================================================================
+// 🧰 HELPERS
+// =============================================================================================
+
+/**
+ * 🧾 listNormalize()
+ * Adds ARIA roles (list / listitem) and title or label connection for assistive tech.
+ * @param {jQuery} listWrapper - jQuery object containing list elements.
+ * @param {string|jQuery} title - Either a string for aria-label or an element for aria-labelledby.
+ */
+function listNormalize(listWrapper, title) {
+  listWrapper.each(function () {
+    $(this).attr({ role: 'list' }).children().each(function () {
+      if ($(this).prop("tagName").indexOf('H') == -1) {
+        $(this).attr({ role: 'listitem' });
+      }
+    });
+  });
+  if (typeof title == 'string') {
+    listWrapper.each(function () {
+      $(this).attr({ 'aria-label': title });
+    });
+    return title;
+  } else {
+    var id = title.attr('id');
+    if (!id) {
+      id = 'aria-' + crypto.randomUUID();
+      title.attr({ id: id });
+    }
+    listWrapper.each(function () {
+      $(this).attr({ 'aria-labelledby': id });
+    });
+    return id;
+  }
+}
+
+
+/**
+ * 🔗 linkNormalize()
+ * Normalizes links for accessibility:
+ * - Adds ARIA labels for PDFs, Word, Excel files.
+ * - Appends messages for external or new-tab links.
+ * - Removes redundant titles.
+ */
+function linkNormalize(links) {
+  try {
+    links.each(function () {
+      if ($(this).attr('tabindex') === '-1' || $(this).attr('data-skip-normalize') === 'true') {
+        DEVMODE.on && DEVMODE.info && console.info('%c ⚠ skip normalizing : ', 'background: #bada55; color: #117a65;', $(this));
+        return;
+      }
+      prependDocText($(this), true);
+      appendExternalLinkText($(this));
+      appendOpensInText($(this));
+    });
+
+    // --- inner helpers -----------------------------------------------------------------------
+
+    function appendOpensInText(links = $([])) {
+      try {
+        links.each(function () {
+          let href = $(this).attr('href');
+          let title = $(this).attr('title');
+          let download = $(this).attr('download');
+          let target = $(this).attr('target');
+          let lbl = $(this).attr('aria-label') && $.trim($(this).attr('aria-label').replace(/[\t\n"]+/g, ''));
+          let lblby = $(this).attr('aria-labelledby');
+          let txt = $.trim($(this).text().replace(/[\t\n"]+/g, ''));
+          let alt = $(this).find('img').attr('alt');
+          let type = $(this).attr('role') === "button" ? 'button' : 'link';
+          if (lbl && (lbl.indexOf(CURRENTTABMSG) > -1 || lbl.indexOf(NEWWINMSG) > -1)) return;
+          if (typeof href == typeof undefined) return;
+          let msg = '';
+          if (target === '_blank') msg = NEWTABMESSAGE;
+          else if (target === '_new') msg = NEWWINMSG;
+          $(this).attr('data-debug') === "true" && console.info('appendOpensInText: ', msg, $(this));
+          if (typeof lblby !== typeof undefined && lblby !== 'undefined') {
+            let newid = Math.random().toString(16).slice(2);
+            $(this).attr('aria-labelledby', lblby + ' ' + newid);
+            $(this).append(`<span class="visuallyhidden linkOpenMsg" id="${newid}">${msg}</span>`);
+          } else if (lbl) {
+            $(this).attr('aria-label', msg === '' ? lbl : lbl + ' ' + msg);
+          } else if (txt.length > 1) {
+            $(this).attr('aria-label', msg === '' ? txt : txt + ' ' + msg);
+          } else if (alt && alt.length > 0) {
+            $(this).attr('aria-label', msg === '' ? alt : alt + ' ' + msg);
+          } else if (title) {
+            $(this).attr('aria-label', msg === '' ? title : title + ' ' + msg);
+          } else {
+            DEVMODE.on && console.info('%c ⚠ check link label : ', 'background: #bada55; color: #117a65;', msg, $(this));
+          }
+        });
+      } catch (err) {
+        console.error('Error in appendOpensInText(): ', err);
+      }
+    }
+
+    function prependDocText(links = $([]), removeTitle = false) {
+      try {
+        links.each(function () {
+          let href = $(this).attr('href');
+          let download = $(this).attr('download');
+          let docMessage = '';
+          let currentLabel = $(this).attr('aria-label') && $.trim($(this).attr('aria-label').replace(/[\t\n"]+/g, ''));
+          if (typeof href == typeof undefined) return;
+          if (currentLabel && (currentLabel.indexOf(PDFTEXT) > -1 || currentLabel.indexOf(WORDTEXT) > -1 || currentLabel.indexOf(XLSTEXT) > -1 || currentLabel.indexOf(PDFDWNLDTEXT) > -1)) return;
+          if (href.indexOf('.doc') > -1) docMessage = WORDTEXT;
+          else if (href.indexOf('.pdf') > -1) {
+            if (typeof download !== typeof undefined) {
+              $(this).attr('role', 'button');
+              docMessage = PDFDWNLDTEXT;
+            } else docMessage = PDFTEXT;
+          } else if (href.indexOf('.xls') > -1) docMessage = XLSTEXT;
+          else return;
+          addMessageToLabel($(this), docMessage);
+        });
+      } catch (err) {
+        console.error('Error in prependDocText(): ', err);
+      }
+    }
+
+    function appendExternalLinkText(links) {
+      try {
+        links.each(function () {
+          let href = $(this).attr('href');
+          let download = $(this).attr('download');
+          var currentLabel = $(this).attr('aria-label');
+          if ((currentLabel && currentLabel.indexOf(EXTSITEMSG) > -1) || typeof download !== typeof undefined) return;
+          if (typeof href == typeof undefined) return;
+          if ((href.indexOf('www') > -1 || href.indexOf('http') > -1) && href.indexOf(CURRENTLOCATION) == -1) {
+            addMessageToLabel($(this), EXTSITEMSG);
+          }
+        });
+      } catch (err) {
+        console.error('Error in appendExternalLinkText(): ', err);
+      }
+    }
+
+    function addMessageToLabel(elem, message) {
+      let lblby = elem.attr('aria-labelledby');
+      let lbl = elem.attr('aria-label') && $.trim(elem.attr('aria-label').replace(/[\t\n"]+/g, ''));
+      let txt = $.trim(elem.text().replace(/[\t\n"]+/g, ''));
+      let alt = elem.find('img').attr('alt');
+      let title = elem.attr('title');
+      if (typeof lblby !== typeof undefined && lblby !== 'undefined') {
+        let newid = Math.random().toString(16).slice(2);
+        elem.attr('aria-labelledby', lblby + ' ' + newid);
+        elem.append(`<span class="visuallyhidden linkOpenMsg" id="${newid}">${message}</span>`);
+      } else if (lbl) {
+        elem.attr('aria-label', lbl + ' ' + message);
+      } else if (txt.length > 1) {
+        elem.attr('aria-label', txt + ' ' + message);
+      } else if (alt && alt.length > 0) {
+        elem.attr('aria-label', alt + ' ' + message);
+      } else if (title) {
+        elem.attr('aria-label', title + ' ' + message);
+      } else {
+        DEVMODE.on && console.info('%c ⚠ check link label : ', 'background: #bada55; color: #117a65;', elem);
+      }
+    }
+
+  } catch (err) {
+    console.error('Error in linkNormalize(): ', err);
+  }
+}
+
+
+/**
+ * ✉️ emailLinkFix()
+ * Ensures email links are properly labeled for screen readers.
+ * @param {jQuery} links - Email links
+ * @param {string} ariaLabel - Base label (default: 'שליחת אימייל')
+ */
+function emailLinkFix(links = $([]), ariaLabel = 'שליחת אימייל') {
+  links.each(function () {
+    if ($(this).text().indexOf('@') === -1 && $(this).attr('href').indexOf('mailto') === -1) {
+      DEVMODE.on && console.info('%c ⚠ early return ', 'background: #71f3d5; color: #102E50', 'emailLinkFix()', $(this));
+      return;
+    }
+    let currentLabel = $(this).attr('aria-label') && $.trim($(this).attr('aria-label').replace(/[\t\n"]+/g, ''));
+    let email = $(this).text().split(' ').filter(word => word.indexOf('@') > -1)[0] || '';
+    if (ariaLabel != 'שליחת אימייל') {
+      $(this).attr('aria-label', ariaLabel.indexOf('@') > -1 ? ariaLabel : ariaLabel + ' ' + email);
+    } else if (currentLabel) {
+      $(this).attr('aria-label', currentLabel + ' ' + email);
+    } else {
+      $(this).attr('aria-label', ariaLabel + ' ' + email);
+    }
+    $(this).removeAttr('title');
+  });
+}
+
+
+// =============================================================================================
+// 🧪 DEVMODE UTILITIES
+// =============================================================================================
+
+function getKeyPress() {
+  $(document).on('keydown', function (e) {
+    console.info(` %c ⌨️ ${e.key} `, 'background: #23486A; color: #fae5d3');
+  });
+}
+
+/**
+ * 🔍 devHelpers()
+ * Runs before/after audits (headings, focus, lang, etc.) when DEVMODE.on = true
+ */
+function devHelpers(type) {
+  switch (type) {
+    case 'Before':
+      console.info('%c ========== Dev mode START ==========', 'background: #23486A; color: #98D8EF');
+      break;
+    case 'After':
+      headingAudit('After');
+      getFocusedElem();
+      getKeyPress();
+      getTitleAndLang();
+      tabindexAudit();
+      console.info(`Accessibility updated ${DEVMODE.lastUpdatedAt}`);
+      break;
+    default:
+      console.info('Devmode without type');
+  }
+}
+
+/**
+ * 🎯 getFocusedElem()
+ * Tracks keyboard focus and clicks for navigation debugging.
+ */
+function getFocusedElem() {
+  let focusIndex = 1;
+  $(window).keydown(function () {
+    setTimeout(function () {
+      console.info(` %c ◎ ${focusIndex} :`, 'background: #23486A; color: #fae5d3', $(':focus'));
+      focusIndex++;
+    }, 300);
+  });
+  $(document).click(function (e) {
+    console.info(` %c ➤ ${focusIndex} :`, 'background: #23486A; color: #fae5d3', e.target);
+    focusIndex++;
+  });
+}
+
+/**
+ * 🌍 getTitleAndLang()
+ * Validates that document title and HTML lang attribute are correct.
+ */
+function getTitleAndLang() {
+  var pageTitle = $(document).attr('title');
+  var lang = $('html').attr('lang');
+  if (!pageTitle || (pageTitle.indexOf($('h1').text()) == -1 && pageTitle.indexOf('בית') == -1)) {
+    console.info(`%c ✘ Title: ${pageTitle} `, `background: #EC5E5E; color: #FFF1D8`);
+  } else {
+    console.info(`%c ✔ Title: ${pageTitle} `, 'background: #117a65; color: #bada55');
+  }
+  if (!lang || lang.indexOf("he") == -1) {
+    console.info(`%c ✘ Lang: ${lang} `, `background: #EC5E5E; color: #FFF1D8`);
+  } else {
+    console.info(`%c ✔ Lang: ${lang} `, 'background: #117a65; color: #bada55');
+  }
+}
+
+/**
+ * 🔢 tabindexAudit()
+ * Detects custom tabindex values that might break navigation.
+ */
+function tabindexAudit() {
+  setTimeout(() => {
+    var elems = $('[tabindex][tabindex!="0"][tabindex!="-1"]');
+    if (elems.length > 0) {
+      console.info('%c ✘ Check tabindex', 'background: #FF6F3C; color: #7B4019', elems);
+    } else {
+      DEVMODE.info && console.info('%c ✔ Tabindex Ok ', 'background: #117a65; color: #bada55');
+    }
+  }, 5000);
+}
+
+/**
+ * 🏗 headingAudit()
+ * Verifies <header>, <main>, <footer> presence and proper heading hierarchy.
+ */
+function headingAudit(title) {
+  console.info(`%c ======= ${title} =======`, 'background: #5b2c6f; color: #C5BAFF');
+  let header = $('header:not([role]), [role="banner"]');
+  let main = $('main:not([role]), [role="main"]');
+  let footer = $('footer:not([role]), [role="contentinfo"]');
+  if (main.length == 0 || main.length > 1 || header.length == 0 || header.length > 1 || footer.length == 0 || footer.length > 1) {
+    console.info('%c ⚠ Check Regions ', 'background: #7d6608; color: #fae5d3', '<header>:', header.length, '<main>:', main.length, '<footer>:', footer.length);
+  } else {
+    console.info('%c ✔ Regions ', 'background: #117a65; color: #bada55');
+  }
+
+  var h1 = $('h1, *[aria-level="1"]');
+  if (h1.length == 0) {
+    console.info('%c ✘ Missing H1', 'background: #a04000; color: #fae5d3');
+  } else if (h1.length > 1) {
+    console.info('%c ⚠ Many H1 :', 'background: #7d6608; color: #fae5d3', h1);
+  } else {
+    console.info('%c ✔ H1 :', 'background: #117a65; color: #bada55', h1.text());
+  }
+
+  countHeadings(header);
+  countHeadings(main);
+  main.find('section, *[role="region"]').each(function () {
+    if ($(this).attr('aria-hidden') === 'true' || $(this).attr('data-skip-audit')) return;
+    let h = countHeadings($(this));
+    let total = Object.values(h).reduce((s, v) => s + v.length, 0);
+    if (total === 0) {
+      console.info('%c ⚠ Empty section:', 'background: #7d6608; color: #fae5d3', $(this));
+    }
+  });
+  countHeadings(footer);
+
+  function countHeadings(section) {
+    let h1 = section.find('h1, *[aria-level="1"]');
+    let h2 = section.find('h2, *[aria-level="2"]');
+    let h3 = section.find('h3, *[aria-level="3"]');
+    let h4 = section.find('h4, *[aria-level="4"]');
+    let h5 = section.find('h5, *[aria-level="5"]');
+    let h6 = section.find('h6, *[aria-level="6"]');
+    return { h1, h2, h3, h4, h5, h6 };
+  }
+}
