@@ -32,7 +32,7 @@ homePage();              // Page-specific logic (customize per site)
 linkNormalize($('a'));   // Normalizes all links accessibility-wise
 
 DEVMODE.on && devHelpers('After');
-
+console.log(`%cGroup107 Accessibility ${DEVMODE.lastUpdatedAt}`, "color:#51828A; font-weight:bold;");
 
 // =============================================================================================
 // 🧩 PAGE LOGIC
@@ -265,15 +265,15 @@ function getKeyPress() {
 function devHelpers(type) {
   switch (type) {
     case 'Before':
-      console.info('%c ========== Dev mode START ==========', 'background: #23486A; color: #98D8EF');
+      //make something before fixing
       break;
     case 'After':
+      //After fix
       headingAudit('After');
       getFocusedElem();
       getKeyPress();
       getTitleAndLang();
       tabindexAudit();
-      console.info(`Accessibility updated ${DEVMODE.lastUpdatedAt}`);
       break;
     default:
       console.info('Devmode without type');
