@@ -337,7 +337,7 @@ function tabindexAudit() {
  * Verifies <header>, <main>, <footer> presence and proper heading hierarchy.
  */
 function headingAudit(title) {
-  console.info(`%c ======= ${title} =======`, 'background: #5b2c6f; color: #C5BAFF');
+  console.info(`%c ======= Dev mode =======`, 'background: #5b2c6f; color: #C5BAFF');
   let header = $('header:not([role]), [role="banner"]');
   let main = $('main:not([role]), [role="main"]');
   let footer = $('footer:not([role]), [role="contentinfo"]');
