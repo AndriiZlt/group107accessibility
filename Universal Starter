@@ -233,7 +233,7 @@ function linkNormalize(links) {
 function emailLinkFix(links = $([]), ariaLabel = 'שליחת אימייל') {
   links.each(function () {
     if ($(this).text().indexOf('@') === -1 && $(this).attr('href').indexOf('mailto') === -1) {
-      DEVMODE.on && console.info('%c ⚠ early return ', 'background: #71f3d5; color: #102E50', 'emailLinkFix()', $(this));
+      DEVMODE.on && console.info('%c ⚠ Early return ', 'background: #71f3d5; color: #102E50', 'emailLinkFix()', $(this));
       return;
     }
     let currentLabel = $(this).attr('aria-label') && $.trim($(this).attr('aria-label').replace(/[\t\n"]+/g, ''));
