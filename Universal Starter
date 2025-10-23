@@ -50,7 +50,9 @@ function generalFixes() {
 // Homepage specific logic
 function homePage() {
   // Example:
+  // if ($('h1').text() !== "") return;
   // if (!document.title.includes("Home")) return;
+  // if (!document.title.trim() === '') return;
   // console.info("Running homepage fixes");
 }
 
