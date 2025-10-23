@@ -267,6 +267,7 @@ function getKeyPress() {
 function devHelpers(type) {
   switch (type) {
     case 'Before':
+      console.info(`%c ======= Dev mode =======`, 'background: #5b2c6f; color: #C5BAFF');
       //make something before fixing
       break;
     case 'After':
@@ -339,7 +340,7 @@ function tabindexAudit() {
  * Verifies <header>, <main>, <footer> presence and proper heading hierarchy.
  */
 function headingAudit(title) {
-  console.info(`%c ======= Dev mode =======`, 'background: #5b2c6f; color: #C5BAFF');
+
   let header = $('header:not([role]), [role="banner"]');
   let main = $('main:not([role]), [role="main"]');
   let footer = $('footer:not([role]), [role="contentinfo"]');
@@ -350,13 +351,19 @@ function headingAudit(title) {
   }
 
   var h1 = $('h1, *[aria-level="1"]');
-  if (h1.length == 0) {
+  if (h1.length === 0) {
     console.info('%c ✘ Missing H1', 'background: #a04000; color: #fae5d3');
   } else if (h1.length > 1) {
     console.info('%c ⚠ Many H1 :', 'background: #7d6608; color: #fae5d3', h1);
   } else {
-    console.info('%c ✔ H1 :', 'background: #117a65; color: #bada55', h1.text());
+    var h1Text = h1.text().trim();
+    if (h1Text.length === 0) {
+      console.info('%c ✘ Empty H1 (no visible text)', 'background: #a04000; color: #fae5d3', h1);
+    } else {
+      console.info('%c ✔ H1 :', 'background: #117a65; color: #bada55', h1Text);
+    }
   }
+
 
   countHeadings(header);
   countHeadings(main);
