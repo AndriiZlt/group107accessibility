@@ -4,7 +4,7 @@ let $=jQuery;
 // 🌐 CONFIGURATION
 // =============================================================================================
 
-const CURRENTLOCATION = "www.url.com"; // 🌍 Main domain of the site
+const CURRENTLOCATION = "www.url.com"; // ⚠️ DON'T FORGET TO CHANGE TO REAL PRODUCTION DOMAIN AT THE END OF THE WORK
 
 const DEVMODE = {
   on: true, // ⚠️ Turn FALSE before publishing
@@ -311,7 +311,7 @@ function getTitleAndLang() {
   var pageTitle = $(document).attr('title');
   var lang = $('html').attr('lang');
   if (!pageTitle || (pageTitle.indexOf($('h1').text()) == -1 && pageTitle.indexOf('בית') == -1)) {
-    console.info(`%c ✘ Title: ${pageTitle} `, `background: #EC5E5E; color: #FFF1D8`);
+    console.info(`%c ⚠️ Check Title: ${pageTitle} `, `background: #EC5E5E; color: #FFF1D8`);
   } else {
     console.info(`%c ✔ Title: ${pageTitle} `, 'background: #117a65; color: #bada55');
   }
